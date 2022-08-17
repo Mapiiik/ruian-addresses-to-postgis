@@ -137,8 +137,7 @@ def get_obce_cislenik():
 
 
 def get_data_zsj(url, pref, zipfile=None):
-    """Download fresh data from CUZK server - always last day of previous month
-    """
+    # Download fresh data from CUZK server - always last day of previous month
 
     global logger
 
@@ -158,8 +157,7 @@ def get_data_zsj(url, pref, zipfile=None):
 
 
 def get_obec_file(kod):
-    """Download fresh data from CUZK server - always last day of previous month
-    """
+    # Download fresh data from CUZK server - always last day of previous month
 
     global logger
 
@@ -172,8 +170,8 @@ def get_obec_file(kod):
 
 
 def myint(number):
-    """Convert to integer, None otherwice
-    """
+    # Convert to integer, None otherwice
+
     try:
         return int(number)
     except ValueError as e:

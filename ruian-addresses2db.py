@@ -62,10 +62,9 @@ Base = declarative_base()
 
 
 class Address(Base):
-    """Address class - one to one copy of input CSV file structure according to
-    RUIAN documentation
-    http://vdp.cuzk.cz/vymenny_format/csv/ad-csv-struktura.pdf
-    """
+    # Address class - one to one copy of input CSV file structure according to
+    # RUIAN documentation
+    # http://vdp.cuzk.cz/vymenny_format/csv/ad-csv-struktura.pdf
 
     __tablename__ = 'addresses'
     kod_adm = Column(Integer, primary_key=True)
@@ -90,8 +89,7 @@ class Address(Base):
 
 
 def get_data(zipfile=None):
-    """Download fresh data from CUZK server - always last day of previous month
-    """
+    # Download fresh data from CUZK server - always last day of previous month
 
     now = datetime.datetime.now()
     month = now.month - 1
@@ -123,8 +121,7 @@ def get_data(zipfile=None):
 
 
 def myint(number):
-    """Convert to integer, None otherwice
-    """
+    #Convert to integer, None otherwice
     try:
         return int(number)
     except ValueError as e:
@@ -132,8 +129,7 @@ def myint(number):
 
 
 def get_engine(connection, verbose=False):
-    """Create database engine - do some extra tuning for SpatiaLite
-    """
+    # Create database engine - do some extra tuning for SpatiaLite
 
     sqlite = connection.find("sqlite") == 0
     so = '/usr/lib/x86_64-linux-gnu/mod_spatialite.so'
@@ -170,7 +166,7 @@ def main(connection, schema=None, verbose=False, zipfile=None):
     session = Session()
 
     epsg4326 = pyproj.CRS("EPSG:4326") # WGS-84
-    epsg5514 = pyproj.CRS("EPSG:5514") # S-JTSK """
+    epsg5514 = pyproj.CRS("EPSG:5514") # S-JTSK
 
     project = pyproj.Transformer.from_crs(epsg5514, epsg4326, always_xy=True).transform
 
