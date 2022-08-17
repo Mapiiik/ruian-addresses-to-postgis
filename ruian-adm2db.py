@@ -239,7 +239,7 @@ def import_zsj(connection, schema, zipfile, kraje=False, vusc=False,
 
 
 def import_obce(connection, schema, obec=False, ku=False, casti_obci=False, ulice=False,
-        casti_obci=False, parcely=False, stav_objekty=False, adresy=False):
+        parcely=False, stav_objekty=False, adresy=False):
 
     global logger
 
