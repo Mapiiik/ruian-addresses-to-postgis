@@ -40,16 +40,16 @@ License:
 
 import argparse
 from sqlalchemy import create_engine
+from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Date
 from geoalchemy2 import Geometry
 from sqlalchemy.orm import sessionmaker
 import os
 import csv
-from shapely.wkt import loads
-from shapely.ops import transform
 import pyproj
-from functools import partial
+from shapely.geometry import Point
+from shapely.ops import transform
 import requests
 import datetime
 from calendar import monthrange
@@ -70,7 +70,7 @@ class Address(Base):
     __tablename__ = 'addresses'
     kod_adm = Column(Integer, primary_key=True)
     obec_kod = Column(Integer)
-    obec_nazev = Column(String)
+    obec_nazev = Column(String, index=True)
     momc_kod = Column(Integer, nullable=True)
     momc_nazev = Column(String, nullable=True)
     mop_kod = Column(Integer, nullable=True)
@@ -83,7 +83,7 @@ class Address(Base):
     cislo_domovni = Column(Integer, nullable=True)
     cislo_orientacni = Column(Integer, nullable=True)
     cislo_orientacni_znak = Column(String)
-    psc = Column(Integer)
+    psc = Column(Integer, index=True)
     plati_od = Column(Date)
     geometry = Column(Geometry('POINT', srid=4326))
     geometry_jtsk = Column(Geometry('POINT', srid=5514))
@@ -161,7 +161,7 @@ def main(connection, schema=None, verbose=False, zipfile=None):
     if schema:
         Address.__table__.schema = schema
 
-    if engine.dialect.has_table(engine, "addresses", schema=schema):
+    if inspect(engine).has_table("addresses", schema=schema):
         Address.__table__.drop(engine)
 
     Address.__table__.create(engine)
@@ -169,14 +169,10 @@ def main(connection, schema=None, verbose=False, zipfile=None):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    epsg4326 = pyproj.Proj(init="epsg:4326")
-    epsg5514 = pyproj.Proj(
-        "+proj=krovak +lat_0=49.5 +lon_0=24.83333333333333 "
-        "+alpha=30.28813972222222 +k=0.9999 +x_0=0 +y_0=0 +ellps=bessel "
-        "+pm=greenwich +units=m +no_defs "
-        "+towgs84=570.8,85.7,462.8,4.998,1.587,5.261,3.56")
+    epsg4326 = pyproj.CRS("EPSG:4326") # WGS-84
+    epsg5514 = pyproj.CRS("EPSG:5514") # S-JTSK """
 
-    project = partial(pyproj.transform, epsg5514, epsg4326)
+    project = pyproj.Transformer.from_crs(epsg5514, epsg4326, always_xy=True).transform
 
     data = []
 
@@ -200,7 +196,7 @@ def main(connection, schema=None, verbose=False, zipfile=None):
                 X = float(X)*-1
                 Y = float(Y)*-1
 
-                geometry = loads('POINT({} {})'.format(Y, X))
+                geometry = Point(Y, X)
                 geometry_wgs = transform(project, geometry)
 
                 new_address = Address(
@@ -215,12 +211,12 @@ def main(connection, schema=None, verbose=False, zipfile=None):
                     cislo_orientacni=myint(cislo_orientacni),
                     cislo_orientacni_znak=cislo_orientacni_znak,
                     psc=psc, plati_od=plati_od,
-                    geometry="SRID=4326;{}".format(geometry_wgs.to_wkt()),
-                    geometry_jtsk="SRID=5514;{}".format(geometry.to_wkt())
+                    geometry="SRID=4326;{}".format(geometry_wgs.wkt),
+                    geometry_jtsk="SRID=5514;{}".format(geometry.wkt)
                 )
 
                 data.append(new_address)
-                if len(data) == 10000:
+                if len(data) == 100000:
                     session.add_all(data)
                     session.commit()
                     data = []
